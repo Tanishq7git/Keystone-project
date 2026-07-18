@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as api from '../api/endpoints';
 import type { CurrentUser } from '../types';
 
@@ -20,6 +21,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState<StoredUser | null>(() => {
     const raw = localStorage.getItem('keystone_user');
     return raw ? (JSON.parse(raw) as StoredUser) : null;
@@ -53,14 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function logout() {
+  const logout = useCallback(() => {
     localStorage.removeItem('keystone_token');
     localStorage.removeItem('keystone_user');
     setUser(null);
-    window.location.href = '/login';
-  }
+    navigate('/login', { replace: true });
+  }, [navigate]);
 
-  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading]);
+  const value = useMemo(() => ({ user, loading, login, logout }), [user, loading, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
